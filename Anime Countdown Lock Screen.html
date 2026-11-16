@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Anime Countdown Lock Screen</title>
+<style>
+:root{--bg1:#1a1740;--bg2:#5a2a6e;--bg3:#f19aa8;--fg:#fff;--soft:rgba(255,255,255,.16);color-scheme:dark}
+@media (prefers-color-scheme:dark){:root{--bg1:#1a1740;--bg2:#5a2a6e;--bg3:#f19aa8;--fg:#fff}}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#0b0620;font-family:"Hiragino Sans","Yu Gothic","Segoe UI",system-ui,sans-serif;color:var(--fg);overflow:hidden}
+.phone{position:relative;height:100%;max-width:440px;margin:0 auto;overflow:hidden;background:linear-gradient(180deg,var(--bg1),var(--bg2) 55%,var(--bg3));padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.moon{position:absolute;top:18%;right:-40px;width:230px;height:230px;border-radius:50%;background:#d8002a;box-shadow:0 0 80px 30px rgba(255,255,255,.35);opacity:.9}
+.petal{position:absolute;top:-20px;width:12px;height:9px;background:#ffc6dd;border-radius:80% 0 80% 0;opacity:.85;animation:fall linear infinite}
+@keyframes fall{to{transform:translate(-60px,110vh) rotate(540deg)}}
+.top{position:relative;text-align:center;padding-top:34px}
+.date{font-size:16px;letter-spacing:.5px;opacity:.9}
+.time{font-size:78px;font-weight:200;line-height:1;margin-top:2px;text-shadow:0 2px 20px rgba(0,0,0,.35)}
+.event{position:relative;text-align:center;margin-top:14px}
+.event small{display:block;font-size:12px;letter-spacing:3px;text-transform:uppercase;opacity:.8}
+.event b{font-size:22px;font-weight:700}
+.cd{position:relative;display:flex;gap:10px;justify-content:center;margin:14px 16px 0}
+.cd div{flex:1;max-width:84px;text-align:center;padding:12px 0 8px;border-radius:18px;background:var(--soft);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.22)}
+.cd span{display:block;font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
+.cd em{font-style:normal;font-size:11px;letter-spacing:2px;opacity:.8}
+.edit{position:relative;display:block;margin:12px auto 0;background:none;border:1px solid rgba(255,255,255,.35);color:var(--fg);border-radius:20px;padding:6px 16px;font-size:12px}
+.panel{display:none;position:relative;margin:10px 20px 0;padding:12px;border-radius:16px;background:rgba(10,5,30,.65);gap:8px;flex-direction:column}
+.panel.on{display:flex}
+.panel input{padding:8px;border-radius:10px;border:0;font-size:14px}
+.panel button{padding:8px;border-radius:10px;border:0;background:#ff7eb6;color:#2a0a3a;font-weight:700}
+.rows{position:absolute;left:0;right:0;bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.row{overflow:hidden;white-space:nowrap;margin-bottom:8px}
+.track{display:inline-block;animation:slide 60s linear infinite}
+.row.r2 .track{animation-direction:reverse;animation-duration:75s}
+.row.r3 .track{animation-duration:90s}
+.row i{display:inline-block;font-style:normal;margin-right:8px;padding:5px 12px;border-radius:14px;background:var(--soft);font-size:13px;border:1px solid rgba(255,255,255,.18)}
+.row.r2 i{background:rgba(216,0,42,.4)}
+.row.r3 i{background:rgba(255,255,255,.28)}
+@keyframes slide{to{transform:translateX(-50%)}}
+.row i.ch{padding:4px 14px 4px 5px;cursor:pointer}
+.av{display:inline-block;width:34px;height:34px;border-radius:50%;margin-right:8px;vertical-align:middle;text-align:center;line-height:30px;font-size:12px;font-weight:700;text-decoration:none;background-size:cover;background-position:center;border:2px solid rgba(255,255,255,.75)}
+svg.land{position:absolute;left:0;right:0;bottom:0;width:100%;height:210px}
+.bot{position:absolute;left:0;right:0;bottom:calc(26px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;padding:0 36px}
+.bot b{width:50px;height:50px;border-radius:50%;background:rgba(20,10,40,.6);display:grid;place-items:center;font-size:20px;font-weight:400}
+.hint{position:absolute;bottom:calc(6px + env(safe-area-inset-bottom,0px));width:100%;text-align:center;font-size:11px;opacity:.7}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+  <div class="moon"></div>
+  <div class="top"><div class="date" id="date"></div><div class="time" id="time"></div></div>
+  <div class="event"><small>カウントダウン ・ Countdown to</small><b id="label">Next Episode ・ 次の話</b></div>
+  <div class="cd">
+    <div><span id="d">00</span><em>DAYS</em></div>
+    <div><span id="h">00</span><em>HRS</em></div>
+    <div><span id="m">00</span><em>MIN</em></div>
+    <div><span id="s">00</span><em>SEC</em></div>
+  </div>
+  <button class="edit" id="editBtn">✎ Change event</button>
+  <div class="panel" id="panel">
+    <input id="inLabel" placeholder="Event name (e.g. New season premiere)">
+    <input id="inDate" type="datetime-local">
+    <button id="save">Save</button>
+  </div>
+
+  <div class="rows">
+    <div class="row r1"><div class="track" id="t1"></div></div>
+    <div class="row r2"><div class="track" id="t2"></div></div>
+    <div class="row r3"><div class="track" id="t3"></div></div>
+  </div>
+
+  <svg class="land" viewBox="0 0 440 210" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M70 165 L200 70 L240 70 L370 165Z" fill="#3a2a6a"/><path d="M200 70 L240 70 L252 88 L238 82 L220 94 L202 82 L188 88Z" fill="#fff"/>
+    <g fill="#d8002a"><rect x="168" y="112" width="9" height="72"/><rect x="263" y="112" width="9" height="72"/><path d="M150 112 Q220 96 290 112 L290 120 Q220 106 150 120Z"/><rect x="172" y="128" width="96" height="7"/></g>
+    <path d="M0 182 Q110 160 220 182 T440 182 L440 210 L0 210Z" fill="#2a0f3a"/>
+    <path d="M0 196 Q110 184 220 196 T440 196 L440 210 L0 210Z" fill="#12061f"/>
+  </svg>
+
+  <div class="bot"><b>🔦</b><b>📷</b></div>
+  <div class="hint">Tap a name to add its face 🌸</div>
+</div>
+
+<script>
+var ANIME=["Naruto","One Piece","Dragon Ball Z","Bleach","Attack on Titan","Demon Slayer","Jujutsu Kaisen","My Hero Academia","Death Note","Fullmetal Alchemist: Brotherhood","Hunter x Hunter","One Punch Man","Sword Art Online","Tokyo Ghoul","Fairy Tail","Black Clover","Chainsaw Man","Spy x Family","Cowboy Bebop","Neon Genesis Evangelion","Steins;Gate","Code Geass","Haikyuu!!","Fruits Basket","Your Name","Spirited Away","Howl's Moving Castle","Princess Mononoke","My Neighbor Totoro","Sailor Moon","Pokémon","Digimon","Fire Force","Dr. Stone","Mob Psycho 100","Vinland Saga","Re:Zero","Konosuba","Overlord","Fate/stay night","Gintama","Yu Yu Hakusho","Inuyasha","Rurouni Kenshin","Dragon Ball Super","Boruto","Blue Lock","Oshi no Ko","Frieren","Dandadan","Solo Leveling","Kaguya-sama","Toradora!","Clannad","Violet Evergarden","Made in Abyss","Berserk","Trigun","Samurai Champloo","Initial D","Slam Dunk","Kuroko's Basketball","Assassination Classroom","The Promised Neverland","Dororo","Akame ga Kill!","Noragami","Soul Eater","Blue Exorcist","D.Gray-man","Seven Deadly Sins","Bocchi the Rock!","Lycoris Recoil","Cyberpunk: Edgerunners"];
+var CHARS=["Naruto Uzumaki","Sasuke Uchiha","Kakashi","Luffy","Zoro","Nami","Sanji","Goku","Vegeta","Ichigo","Eren Yeager","Mikasa","Levi","Tanjiro","Nezuko","Zenitsu","Inosuke","Yuji Itadori","Gojo Satoru","Megumi","Nobara","Deku","Bakugo","Todoroki","All Might","Light Yagami","L","Edward Elric","Alphonse","Gon Freecss","Killua","Saitama","Genos","Kirito","Asuna","Kaneki","Natsu","Lucy","Asta","Denji","Power","Makima","Anya Forger","Loid","Yor","Spike Spiegel","Shinji Ikari","Rei Ayanami","Asuka","Okabe Rintaro","Lelouch","Hinata Shoyo","Kageyama","Totoro","Chihiro","Haku","Sophie","Howl","San","Sailor Moon","Pikachu","Ash Ketchum","Thorfinn","Rem","Emilia","Aqua","Megumin","Guts","Vash","Mob","Frieren","Fern","Bocchi","Kaguya","Makise Kurisu","Mitsuha","Taki","Violet","Rukia","Aizen","Itachi","Madara","Jiraiya","Hinata Hyuga","Shanks","Ace","Chopper","Robin","Usopp","Trafalgar Law","Whitebeard","Gohan","Trunks","Frieza","Piccolo","Mikey","Takemichi","Yuta Okkotsu","Sukuna","Nanami","Maki","Toji","Rimuru","Subaru","Reigen","Hisoka","Meruem","Kurapika"];
+function fill(id,list,off,av){var h="";for(var k=0;k<2;k++){for(var i=0;i<list.length;i++){var n=list[(i+off)%list.length];if(av){var w=n.split(" "),ini=w[0].charAt(0)+(w.length>1?w[w.length-1].charAt(0):""),hue=(n.length*47+n.charCodeAt(0)*13)%360;h+='<i class="ch" data-n="'+n+'"><u class="av" style="background-color:hsl('+hue+',60%,45%)">'+ini+'</u>'+n+'</i>'}else{h+="<i>"+n+"</i>"}}}document.getElementById(id).innerHTML=h}
+var CREW=["Monkey D. Luffy","Roronoa Zoro","Nami","Usopp","Sanji","Tony Tony Chopper","Nico Robin","Franky","Brook","Jinbe","Portgas D. Ace","Sabo","Shanks","Whitebeard","Blackbeard","Trafalgar Law","Eustass Kid","Boa Hancock","Mihawk","Buggy","Vivi","Yamato","Kaido","Big Mom","Garp","Akainu","Aokiji","Kizaru","Smoker","Tashigi","Crocodile","Doflamingo","Rob Lucci","Gol D. Roger","Rayleigh","Dragon","Marco","Katakuri","Carrot","Bartolomeo","Koby","Perona","Oden","Vegapunk"];
+var SAGAS=["Romance Dawn","Orange Town","Syrup Village","Baratie","Arlong Park","Loguetown","Alabasta","Skypiea","Water 7","Enies Lobby","Thriller Bark","Sabaody","Amazon Lily","Impel Down","Marineford","Fish-Man Island","Punk Hazard","Dressrosa","Zou","Whole Cake Island","Wano Country","Egghead","Elbaph"];
+var MORE=["Going Merry","Thousand Sunny","Grand Line","One Piece","Gomu Gomu no Mi","Gum-Gum Pistol","Gear 2","Gear 3","Gear 4","Gear 5","Sun God Nika","Joy Boy","Haki","Santoryu","Diable Jambe","Sea Kings","Log Pose","Devil Fruits","Straw Hat Pirates","Red Line","Laugh Tale"];
+fill("t1",CREW,0,1);fill("t2",SAGAS,0);fill("t3",MORE,0);
+var inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.style.display="none";document.body.appendChild(inp);var cur=null;
+function setAv(n,u){var els=document.querySelectorAll('.ch[data-n="'+n+'"] .av');for(var i=0;i<els.length;i++){els[i].style.backgroundImage="url("+u+")";els[i].textContent=""}}
+document.getElementById("t1").onclick=function(e){var c=e.target.closest?e.target.closest(".ch"):null;if(!c)return;cur=c.getAttribute("data-n");inp.value="";inp.click()};
+inp.onchange=function(){var f=inp.files&&inp.files[0];if(!f||!cur)return;var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var cv=document.createElement("canvas");cv.width=cv.height=96;var s=Math.min(im.width,im.height);cv.getContext("2d").drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,96,96);var u=cv.toDataURL("image/jpeg",0.8);try{localStorage.setItem("av:"+cur,u)}catch(e){}setAv(cur,u)};im.src=r.result};r.readAsDataURL(f)};
+for(var q=0;q<CREW.length;q++){try{var sv2=localStorage.getItem("av:"+CREW[q]);if(sv2)setAv(CREW[q],sv2)}catch(e){}}
+for(var p=0;p<14;p++){var e=document.createElement("div");e.className="petal";e.style.left=(Math.random()*110)+"%";e.style.animationDuration=(7+Math.random()*8)+"s";e.style.animationDelay=(-Math.random()*12)+"s";document.getElementById("phone").appendChild(e)}
+
+var target=new Date(2027,0,1,0,0,0).getTime(),label="Next Episode ・ 次の話";
+try{var sv=JSON.parse(localStorage.getItem("animeCd")||"null");if(sv&&sv.t){target=sv.t;label=sv.l||label}}catch(e){}
+document.getElementById("label").textContent=label;
+function two(n){return(n<10?"0":"")+n}
+function tick(){
+  var n=new Date();
+  document.getElementById("time").textContent=two(n.getHours())+":"+two(n.getMinutes());
+  document.getElementById("date").textContent=n.toLocaleDateString("ja-JP",{weekday:"long",month:"long",day:"numeric"});
+  var diff=Math.max(0,target-n.getTime());
+  var s=Math.floor(diff/1000);
+  document.getElementById("d").textContent=two(Math.floor(s/86400));
+  document.getElementById("h").textContent=two(Math.floor(s%86400/3600));
+  document.getElementById("m").textContent=two(Math.floor(s%3600/60));
+  document.getElementById("s").textContent=two(s%60);
+}
+tick();setInterval(tick,1000);
+document.getElementById("editBtn").onclick=function(){document.getElementById("panel").classList.toggle("on")};
+document.getElementById("save").onclick=function(){
+  var l=document.getElementById("inLabel").value.trim(),d=document.getElementById("inDate").value;
+  if(d){target=new Date(d).getTime()}
+  if(l){label=l}
+  document.getElementById("label").textContent=label;
+  try{localStorage.setItem("animeCd",JSON.stringify({t:target,l:label}))}catch(e){}
+  document.getElementById("panel").classList.remove("on");tick();
+};
+</script>
+</body>
+</html>
